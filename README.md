@@ -34,4 +34,4 @@ Open http://localhost:8000 (mic works on localhost without HTTPS).
 
 ## Notes
 - STT is behind an `STTProvider` interface (`app/services/stt_base.py`), so an open-source engine such as faster-whisper can be added as another provider.
-- Verify `GEMINI_MODEL` against Google's current Live API model list.
+- Uses Google's dedicated `gemini-3.5-transcribe-live` model (text output, auto language detection). Sessions are capped at about 10 minutes of streaming.

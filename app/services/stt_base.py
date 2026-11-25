@@ -5,8 +5,10 @@ from collections.abc import AsyncIterator
 class STTProvider(ABC):
     """Streaming speech-to-text provider.
 
-    Feed 16 kHz mono PCM16 chunks via `send_audio`; consume text deltas
-    from `transcripts()`.
+    Feed 16 kHz mono PCM16 chunks via `send_audio`; consume
+    (kind, text) events from `transcripts()` where kind is
+    "interim" (speculative, replaces previous interim) or
+    "final" (authoritative segment, append to transcript).
     """
 
     @abstractmethod
@@ -22,4 +24,4 @@ class STTProvider(ABC):
     async def end_audio(self) -> None: ...
 
     @abstractmethod
-    def transcripts(self) -> AsyncIterator[str]: ...
+    def transcripts(self) -> AsyncIterator[tuple[str, str]]: ...

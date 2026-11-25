@@ -3,7 +3,7 @@ from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 
 from .db import Base, engine
-from .routers import transcripts, ws
+from .routers import debug, transcripts, ws
 
 app = FastAPI(title="Speech to Text")
 
@@ -12,6 +12,7 @@ Base.metadata.create_all(bind=engine)
 
 app.include_router(transcripts.router)
 app.include_router(ws.router)
+app.include_router(debug.router)  # TEMP: remove before submission
 
 
 @app.get("/health")

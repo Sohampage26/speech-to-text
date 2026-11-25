@@ -30,11 +30,16 @@ async def transcribe(ws: WebSocket):
                         raise WebSocketDisconnect()
 
             async def writer():
-                # Gemini -> Browser
+                # Gemini -> Browser. "final" segments are appended;
+                # "interim" is a speculative tail shown until the next final.
                 nonlocal full
-                async for delta in stt.transcripts():
-                    full += delta
-                    await ws.send_text(json.dumps({"type": "partial", "text": full}))
+                async for kind, text in stt.transcripts():
+                    if kind == "final":
+                        full = (full + " " + text.strip()).strip()
+                        shown = full
+                    else:
+                        shown = (full + " " + text.strip()).strip()
+                    await ws.send_text(json.dumps({"type": "partial", "text": shown}))
 
             r = asyncio.create_task(reader())
             w = asyncio.create_task(writer())
