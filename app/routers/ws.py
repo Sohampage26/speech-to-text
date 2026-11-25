@@ -1,0 +1,54 @@
+import asyncio
+import json
+import logging
+
+from fastapi import APIRouter, WebSocket, WebSocketDisconnect
+
+from ..services.gemini_live import GeminiLiveSTT
+
+log = logging.getLogger(__name__)
+router = APIRouter()
+
+
+@router.websocket("/ws/transcribe")
+async def transcribe(ws: WebSocket):
+    await ws.accept()
+    full = ""
+    try:
+        async with GeminiLiveSTT() as stt:
+
+            async def reader():
+                # Browser -> Gemini. Binary = PCM16 audio, text "stop" = end.
+                while True:
+                    msg = await ws.receive()
+                    if msg.get("bytes"):
+                        await stt.send_audio(msg["bytes"])
+                    elif msg.get("text") == "stop":
+                        await stt.end_audio()
+                        return
+                    elif msg["type"] == "websocket.disconnect":
+                        raise WebSocketDisconnect()
+
+            async def writer():
+                # Gemini -> Browser
+                nonlocal full
+                async for delta in stt.transcripts():
+                    full += delta
+                    await ws.send_text(json.dumps({"type": "partial", "text": full}))
+
+            r = asyncio.create_task(reader())
+            w = asyncio.create_task(writer())
+            await r  # wait for the user to stop
+            await asyncio.sleep(1.5)  # let trailing transcription arrive
+            w.cancel()
+    except WebSocketDisconnect:
+        return
+    except Exception as e:  # noqa: BLE001
+        log.exception("transcription failed")
+        await ws.send_text(json.dumps({"type": "error", "message": str(e)}))
+    finally:
+        try:
+            await ws.send_text(json.dumps({"type": "final", "text": full.strip()}))
+            await ws.close()
+        except Exception:  # noqa: BLE001
+            pass

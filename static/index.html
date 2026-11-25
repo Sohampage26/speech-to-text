@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Speech to Text</title>
+  <link rel="stylesheet" href="/static/styles.css">
+</head>
+<body>
+  <main>
+    <h1>Speech to Text</h1>
+    <p class="sub">Speak in Hindi, English, or a mix. Text appears live.</p>
+
+    <section class="card">
+      <div class="row">
+        <button id="toggle" class="primary">🎤 Start</button>
+        <span id="status" class="muted">Idle</span>
+      </div>
+      <textarea id="live" placeholder="Live transcript appears here..." rows="5"></textarea>
+      <div class="row">
+        <button id="save" disabled>Save transcript</button>
+        <button id="clear" class="ghost">Clear</button>
+      </div>
+    </section>
+
+    <section class="card">
+      <div class="row between">
+        <h2>History</h2>
+        <input id="search" type="search" placeholder="Search...">
+      </div>
+      <table>
+        <thead><tr><th>Text</th><th>Created</th><th></th></tr></thead>
+        <tbody id="rows"></tbody>
+      </table>
+      <div class="row between">
+        <button id="prev" class="ghost">← Prev</button>
+        <span id="page" class="muted"></span>
+        <button id="next" class="ghost">Next →</button>
+      </div>
+    </section>
+  </main>
+  <script src="/static/app.js"></script>
+</body>
+</html>

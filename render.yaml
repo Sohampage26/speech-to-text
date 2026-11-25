@@ -1,0 +1,13 @@
+services:
+  - type: web
+    name: speech-to-text
+    runtime: docker
+    plan: free
+    healthCheckPath: /health
+    envVars:
+      - key: DATABASE_URL
+        sync: false
+      - key: GEMINI_API_KEY
+        sync: false
+      - key: GEMINI_MODEL
+        value: gemini-live-2.5-flash-preview
