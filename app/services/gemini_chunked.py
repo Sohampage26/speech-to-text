@@ -1,5 +1,6 @@
 import asyncio
 import io
+import logging
 import wave
 from array import array
 from collections.abc import AsyncIterator
@@ -10,11 +11,13 @@ from google.genai import types
 from ..config import settings
 from .stt_base import STTProvider
 
+log = logging.getLogger(__name__)
+
 SAMPLE_RATE = 16000
 CHUNK_SECONDS = 4
 CHUNK_BYTES = SAMPLE_RATE * 2 * CHUNK_SECONDS
 MIN_FLUSH_BYTES = int(SAMPLE_RATE * 2 * 0.4)
-SILENCE_LEVEL = 150  # mean |sample| below this is treated as silence
+SILENCE_LEVEL = 80  # mean |sample| below this is treated as silence
 
 PROMPT = (
     "Transcribe this audio exactly as spoken. The speaker may mix Hindi and English. "
@@ -64,8 +67,15 @@ class GeminiChunkedSTT(STTProvider):
         try:
             while (chunk := await self._in.get()) is not None:
                 if _is_silent(chunk):
+                    log.info("chunk skipped (silence)")
                     continue
-                text = await self._transcribe(chunk)
+                try:
+                    text = await self._transcribe(chunk)
+                    log.info("chunk transcribed: %d chars", len(text))
+                except Exception as e:  # noqa: BLE001
+                    log.exception("gemini transcription call failed")
+                    await self._out.put(("error", f"{type(e).__name__}: {str(e)[:250]}"))
+                    continue
                 if text:
                     await self._out.put(("final", text))
         finally:

@@ -1,7 +1,7 @@
 const $ = (id) => document.getElementById(id);
 const PAGE = 10;
 let ws, ctx, stream, node, startedAt = 0, recording = false;
-let offset = 0, total = 0, query = "";
+let offset = 0, total = 0, query = "", lastError = "";
 
 /* ---------- live transcription ---------- */
 async function start() {
@@ -12,6 +12,7 @@ async function start() {
   node = new AudioWorkletNode(ctx, "pcm-processor");
   src.connect(node);
 
+  lastError = "";
   const proto = location.protocol === "https:" ? "wss" : "ws";
   ws = new WebSocket(`${proto}://${location.host}/ws/transcribe`);
   ws.onopen = () => {
@@ -23,8 +24,11 @@ async function start() {
   ws.onmessage = (e) => {
     const m = JSON.parse(e.data);
     if (m.type === "partial" || m.type === "final") $("live").value = m.text;
-    if (m.type === "error") $("status").textContent = "Error: " + m.message;
-    if (m.type === "final") $("save").disabled = !m.text;
+    if (m.type === "error") { lastError = "Error: " + m.message; $("status").textContent = lastError; }
+    if (m.type === "final") {
+      $("save").disabled = !m.text;
+      if (!m.text && !lastError) lastError = "No speech recognized. Speak louder or check the mic.";
+    }
   };
   ws.onclose = () => { cleanup(); setUI(); };
 }
@@ -45,7 +49,7 @@ function cleanup() {
 function setUI() {
   $("toggle").textContent = recording ? "⏹ Stop" : "🎤 Start";
   $("toggle").classList.toggle("rec", recording);
-  $("status").textContent = recording ? "Listening..." : "Idle";
+  $("status").textContent = recording ? "Listening..." : (lastError || "Idle");
   $("save").disabled = recording || !$("live").value.trim();
 }
 

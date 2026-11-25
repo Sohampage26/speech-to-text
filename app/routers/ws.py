@@ -34,6 +34,9 @@ async def transcribe(ws: WebSocket):
                 # "interim" is a speculative tail shown until the next final.
                 nonlocal full
                 async for kind, text in stt.transcripts():
+                    if kind == "error":
+                        await ws.send_text(json.dumps({"type": "error", "message": text}))
+                        continue
                     if kind == "final":
                         full = (full + " " + text.strip()).strip()
                         shown = full
