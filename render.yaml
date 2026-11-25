@@ -14,4 +14,4 @@ services:
       - key: STT_PROVIDER
         value: chunked
       - key: GEMINI_STT_MODEL
-        value: gemini-2.5-flash
+        value: gemini-3.8-flash

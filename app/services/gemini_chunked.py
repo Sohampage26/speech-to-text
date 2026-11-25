@@ -17,7 +17,8 @@ SAMPLE_RATE = 16000
 CHUNK_SECONDS = 4
 CHUNK_BYTES = SAMPLE_RATE * 2 * CHUNK_SECONDS
 MIN_FLUSH_BYTES = int(SAMPLE_RATE * 2 * 0.4)
-SILENCE_LEVEL = 80  # mean |sample| below this is treated as silence
+SILENCE_LEVEL = 80
+TRANSIENT = {429, 500, 502, 503, 504}  # mean |sample| below this is treated as silence
 
 PROMPT = (
     "Transcribe this audio exactly as spoken. The speaker may mix Hindi and English. "
@@ -82,11 +83,28 @@ class GeminiChunkedSTT(STTProvider):
             await self._out.put(None)
 
     async def _transcribe(self, pcm: bytes) -> str:
-        resp = await self._client.aio.models.generate_content(
-            model=settings.gemini_stt_model,
-            contents=[PROMPT, types.Part.from_bytes(data=_to_wav(pcm), mime_type="audio/wav")],
-        )
-        return (resp.text or "").strip()
+        """Try the primary model, retrying transient errors, then fall back."""
+        models = [settings.gemini_stt_model] + [
+            m.strip() for m in settings.gemini_stt_fallbacks.split(",") if m.strip()
+        ]
+        audio = types.Part.from_bytes(data=_to_wav(pcm), mime_type="audio/wav")
+        last: Exception | None = None
+        for model in models:
+            for attempt in range(2):
+                try:
+                    resp = await self._client.aio.models.generate_content(
+                        model=model, contents=[PROMPT, audio]
+                    )
+                    return (resp.text or "").strip()
+                except Exception as e:  # noqa: BLE001
+                    last = e
+                    code = getattr(e, "code", None)
+                    log.warning("model %s attempt %d failed: %s", model, attempt + 1, e)
+                    if code in TRANSIENT and attempt == 0:
+                        await asyncio.sleep(1.5)
+                        continue
+                    break  # non-retryable or retries used up -> next model
+        raise last  # type: ignore[misc]
 
     async def send_audio(self, pcm: bytes) -> None:
         self._buf.extend(pcm)
