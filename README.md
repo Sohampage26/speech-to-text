@@ -33,5 +33,6 @@ Open http://localhost:8000 (mic works on localhost without HTTPS).
 3. Set `DATABASE_URL` and `GEMINI_API_KEY` in Render env vars.
 
 ## Notes
+- Two STT providers, chosen by `STT_PROVIDER`: `chunked` (default; standard Gemini API, audio sent in ~4 s chunks to `GEMINI_STT_MODEL`) and `live` (Gemini Live API, word-by-word, needs Live API access on the key).
 - STT is behind an `STTProvider` interface (`app/services/stt_base.py`), so an open-source engine such as faster-whisper can be added as another provider.
 - Uses Google's dedicated `gemini-3.5-transcribe-live` model (text output, auto language detection). Sessions are capped at about 10 minutes of streaming.

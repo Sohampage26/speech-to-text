@@ -6,7 +6,10 @@ class Settings(BaseSettings):
 
     database_url: str
     gemini_api_key: str
-    gemini_model: str = "gemini-3.5-transcribe-live"
+    # "chunked" (standard Gemini API) or "live" (Gemini Live API)
+    stt_provider: str = "chunked"
+    gemini_stt_model: str = "gemini-2.5-flash"  # used by "chunked"
+    gemini_model: str = "gemini-3.5-transcribe-live"  # used by "live"
 
 
 settings = Settings()

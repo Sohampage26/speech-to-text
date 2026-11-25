@@ -11,6 +11,8 @@ class STTProvider(ABC):
     "final" (authoritative segment, append to transcript).
     """
 
+    drain_timeout: float = 2.0  # seconds to wait for trailing text after Stop
+
     @abstractmethod
     async def __aenter__(self): ...
 

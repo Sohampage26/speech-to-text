@@ -4,7 +4,7 @@ import logging
 
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect
 
-from ..services.gemini_live import GeminiLiveSTT
+from ..services import get_provider
 
 log = logging.getLogger(__name__)
 router = APIRouter()
@@ -15,7 +15,7 @@ async def transcribe(ws: WebSocket):
     await ws.accept()
     full = ""
     try:
-        async with GeminiLiveSTT() as stt:
+        async with get_provider() as stt:
 
             async def reader():
                 # Browser -> Gemini. Binary = PCM16 audio, text "stop" = end.
@@ -44,8 +44,10 @@ async def transcribe(ws: WebSocket):
             r = asyncio.create_task(reader())
             w = asyncio.create_task(writer())
             await r  # wait for the user to stop
-            await asyncio.sleep(1.5)  # let trailing transcription arrive
-            w.cancel()
+            try:  # let trailing transcription arrive
+                await asyncio.wait_for(w, timeout=stt.drain_timeout)
+            except asyncio.TimeoutError:
+                pass
     except WebSocketDisconnect:
         return
     except Exception as e:  # noqa: BLE001

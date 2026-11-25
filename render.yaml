@@ -11,3 +11,7 @@ services:
         sync: false
       - key: GEMINI_MODEL
         value: gemini-3.5-transcribe-live
+      - key: STT_PROVIDER
+        value: chunked
+      - key: GEMINI_STT_MODEL
+        value: gemini-2.5-flash
