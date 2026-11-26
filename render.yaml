@@ -7,11 +7,7 @@ services:
     envVars:
       - key: DATABASE_URL
         sync: false
-      - key: GEMINI_API_KEY
+      - key: SARVAM_API_KEY
         sync: false
-      - key: GEMINI_MODEL
-        value: gemini-3.5-transcribe-live
-      - key: STT_PROVIDER
-        value: chunked
-      - key: GEMINI_STT_MODEL
-        value: gemini-3.8-flash
+      - key: SARVAM_MODE
+        value: codemix

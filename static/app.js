@@ -14,7 +14,7 @@ async function start() {
 
   lastError = "";
   const proto = location.protocol === "https:" ? "wss" : "ws";
-  ws = new WebSocket(`${proto}://${location.host}/ws/transcribe`);
+  ws = new WebSocket(`${proto}://${location.host}/ws/transcribe?lang=${encodeURIComponent($("lang").value)}`);
   ws.onopen = () => {
     node.port.onmessage = (e) => ws.readyState === 1 && ws.send(e.data);
     startedAt = Date.now();
@@ -46,7 +46,15 @@ function cleanup() {
   stream = ctx = null;
 }
 
+async function loadLanguages() {
+  let data = { default: "hi-IN", items: [{ code: "hi-IN", label: "Hindi (mixed with English)" }] };
+  try { data = await api("/api/languages"); } catch (e) { /* keep fallback */ }
+  $("lang").innerHTML = data.items.map((l) => `<option value="${l.code}">${esc(l.label)}</option>`).join("");
+  $("lang").value = data.default;
+}
+
 function setUI() {
+  $("lang").disabled = recording;
   $("toggle").textContent = recording ? "⏹ Stop" : "🎤 Start";
   $("toggle").classList.toggle("rec", recording);
   $("status").textContent = recording ? "Listening..." : (lastError || "Idle");
@@ -115,4 +123,5 @@ $("search").oninput = (e) => { clearTimeout(timer); timer = setTimeout(() => { q
 $("prev").onclick = () => { offset = Math.max(0, offset - PAGE); load(); };
 $("next").onclick = () => { offset += PAGE; load(); };
 
+loadLanguages();
 load();

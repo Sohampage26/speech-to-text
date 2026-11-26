@@ -4,4 +4,4 @@ sqlalchemy>=2.0
 psycopg2-binary>=2.9
 alembic>=1.13
 pydantic-settings>=2.4
-google-genai>=1.0
+sarvamai>=0.1.49

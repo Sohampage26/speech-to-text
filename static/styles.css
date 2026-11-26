@@ -16,3 +16,4 @@ table { width: 100%; border-collapse: collapse; }
 th, td { text-align: left; padding: 8px; border-bottom: 1px solid #eee; vertical-align: top; font-size: 14px; }
 td.actions { white-space: nowrap; }
 td textarea { min-height: 70px; }
+select { padding: 8px; border-radius: 8px; border: 1px solid #ccd; background: #fff; font: inherit; }

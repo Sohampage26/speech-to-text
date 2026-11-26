@@ -1,10 +1,7 @@
-from ..config import settings
+from .sarvam_realtime import SarvamSTT
 from .stt_base import STTProvider
 
 
-def get_provider() -> STTProvider:
-    if settings.stt_provider == "live":
-        from .gemini_live import GeminiLiveSTT
-        return GeminiLiveSTT()
-    from .gemini_chunked import GeminiChunkedSTT
-    return GeminiChunkedSTT()
+def get_provider(language: str = "hi-IN") -> STTProvider:
+    """Single place to swap the STT backend (anything implementing STTProvider)."""
+    return SarvamSTT(language)
